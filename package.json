@@ -33,11 +33,7 @@
         "credentials": [],
         "nodes": [
             "dist/nodes/AiFlowTrigger/AiFlowTrigger.node.js",
-            "dist/nodes/AiFlowSpeak/AiFlowSpeak.node.js",
-            "dist/nodes/AiFlowAudio/AiFlowAudio.node.js",
-            "dist/nodes/AiFlowTransfer/AiFlowTransfer.node.js",
-            "dist/nodes/AiFlowHangup/AiFlowHangup.node.js",
-            "dist/nodes/AiFlowBargeIn/AiFlowBargeIn.node.js"
+            "dist/nodes/AiFlowAction/AiFlowAction.node.js"
         ]
     },
     "devDependencies": {
