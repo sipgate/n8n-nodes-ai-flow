@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="grad-hangup" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E74C3C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C0392B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="45" fill="url(#grad-hangup)"/>
+  <path d="M 35 40 Q 30 35 25 35 Q 20 35 20 40 L 20 50 Q 20 55 25 55 L 30 55 Q 35 55 35 60 L 35 65 Q 35 70 40 70 L 60 70 Q 65 70 65 65 L 65 60 Q 65 55 70 55 L 75 55 Q 80 55 80 50 L 80 40 Q 80 35 75 35 Q 70 35 65 40" fill="white"/>
+  <rect x="30" y="60" width="40" height="8" rx="2" fill="white"/>
+</svg>
