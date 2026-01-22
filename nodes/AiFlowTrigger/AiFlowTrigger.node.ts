@@ -4,6 +4,7 @@ import type {
 	INodeTypeDescription,
 	IWebhookResponseData,
 	IDataObject,
+	INodeExecutionData,
 } from 'n8n-workflow';
 import { NodeConnectionTypes } from 'n8n-workflow';
 
@@ -26,6 +27,7 @@ export class AiFlowTrigger implements INodeType {
 			NodeConnectionTypes.Main,
 			NodeConnectionTypes.Main,
 			NodeConnectionTypes.Main,
+			NodeConnectionTypes.Main,
 		],
 		outputNames: [
 			'Session Start',
@@ -34,6 +36,7 @@ export class AiFlowTrigger implements INodeType {
 			'Assistant Speech Ended',
 			'User Input Timeout',
 			'Session End',
+			'Fallback',
 		],
 		usableAsTool: true,
 		webhooks: [
@@ -121,8 +124,18 @@ export class AiFlowTrigger implements INodeType {
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const req = this.getRequestObject();
-		const body = this.getBodyData();
+		const bodyData = this.getBodyData();
 		const authentication = this.getNodeParameter('authentication') as string;
+
+		// Extract the actual event data
+		// getBodyData() might return the data in different formats
+		let event: IDataObject;
+		if (bodyData && typeof bodyData === 'object') {
+			// If body has a 'body' property, use that
+			event = (bodyData as any).body || bodyData;
+		} else {
+			event = bodyData as IDataObject;
+		}
 
 		// Authenticate request
 		if (authentication === 'headerAuth') {
@@ -142,7 +155,6 @@ export class AiFlowTrigger implements INodeType {
 		}
 
 		// Validate event structure
-		const event = body as IDataObject;
 		if (!event || !event.type) {
 			return {
 				webhookResponse: {
@@ -165,26 +177,12 @@ export class AiFlowTrigger implements INodeType {
 			session_end: 5,
 		};
 
-		const outputIndex = eventOutputMap[eventType];
+		const FALLBACK_OUTPUT = 6;
+		const specificOutputIndex = eventOutputMap[eventType];
 
-		// If event type is unknown, return error
-		if (outputIndex === undefined) {
-			return {
-				webhookResponse: {
-					status: 400,
-					body: { error: `Unknown event type: ${eventType}` },
-				},
-				noWebhookResponse: false,
-			};
-		}
-
-		// Prepare output data
+		// Prepare output data - use the event directly
 		const includeBargeIn = this.getNodeParameter('includeBargeIn') as boolean;
-		const outputData: IDataObject = {
-			eventType: event.type,
-			session: event.session,
-			...event,
-		};
+		const outputData: IDataObject = { ...event };
 
 		// Handle barge-in flag
 		if (!includeBargeIn && 'barged_in' in outputData) {
@@ -193,10 +191,28 @@ export class AiFlowTrigger implements INodeType {
 
 		const responseMode = this.getNodeParameter('responseMode') as string;
 
-		// Route to the correct output
-		const workflowData: Array<Array<{ json: IDataObject }>> = Array(6)
+		// Determine which output to use
+		let targetOutputIndex = FALLBACK_OUTPUT;
+
+		if (specificOutputIndex !== undefined) {
+			// Check if the specific output is connected
+			try {
+				const childNodes = this.getChildNodes(specificOutputIndex.toString());
+				if (childNodes.length > 0) {
+					// Specific output is connected, use it
+					targetOutputIndex = specificOutputIndex;
+				}
+				// Otherwise fall through to use FALLBACK_OUTPUT
+			} catch (error) {
+				// If getChildNodes fails, use fallback
+				targetOutputIndex = FALLBACK_OUTPUT;
+			}
+		}
+
+		// Route to the determined output (either specific or fallback)
+		const workflowData: INodeExecutionData[][] = Array(7)
 			.fill(null)
-			.map((_, index) => (index === outputIndex ? [{ json: outputData }] : []));
+			.map((_, index) => (index === targetOutputIndex ? [{ json: outputData }] : []));
 
 		return {
 			workflowData,
