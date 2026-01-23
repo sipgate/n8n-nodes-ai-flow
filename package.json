@@ -1,15 +1,15 @@
 {
     "name": "@sipgate/n8n-nodes-ai-flow",
     "version": "0.2.0",
-    "description": "n8n community node for sipgate AI Flow - Build AI-powered voice applications with real-time speech processing",
+    "description": "n8n community node for sipgate AI Flow - Build voice applications with real-time speech processing",
     "license": "MIT",
     "homepage": "https://github.com/sipgate/n8n-nodes-ai-flow",
     "keywords": [
         "n8n-community-node-package"
     ],
     "author": {
-        "name": "Michael Rotmanov",
-        "email": "leachiM2k@leachiM2k.de"
+        "name": "sipgate GmbH",
+        "email": "aiflow@sipgate.de"
     },
     "repository": {
         "type": "git",

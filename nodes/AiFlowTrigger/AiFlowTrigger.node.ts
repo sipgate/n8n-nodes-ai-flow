@@ -43,7 +43,7 @@ export class AiFlowTrigger implements INodeType {
 			{
 				name: 'default',
 				httpMethod: 'POST',
-				responseMode: 'onReceived',
+				responseMode: 'lastNode',
 				path: 'webhook',
 			},
 		],
@@ -101,23 +101,31 @@ export class AiFlowTrigger implements INodeType {
 					'Whether to include the barged_in flag in user_speak events (indicates user interrupted)',
 			},
 			{
-				displayName: 'Response Mode',
-				name: 'responseMode',
+				displayName: 'Debug Mode',
+				name: 'debugMode',
+				type: 'boolean',
+				default: false,
+				description:
+					'Whether to include debug information in the output (raw bodyData, event type, etc.)',
+			},
+			{
+				displayName: 'Fallback Behavior',
+				name: 'fallbackBehavior',
 				type: 'options',
 				options: [
 					{
-						name: 'No Response',
-						value: 'noResponse',
-						description: 'Return 204 No Content',
+						name: 'Unknown Events Only',
+						value: 'unknownOnly',
+						description: 'Route only unknown event types to fallback output',
 					},
 					{
-						name: 'Return Last Node',
-						value: 'lastNode',
-						description: 'Return data from the last node in the workflow',
+						name: 'All Events',
+						value: 'allEvents',
+						description: 'Route all events to fallback output (ignore specific outputs)',
 					},
 				],
-				default: 'noResponse',
-				description: 'How to respond to the webhook',
+				default: 'unknownOnly',
+				description: 'How to use the fallback output',
 			},
 		],
 	};
@@ -189,24 +197,17 @@ export class AiFlowTrigger implements INodeType {
 			delete outputData.barged_in;
 		}
 
-		const responseMode = this.getNodeParameter('responseMode') as string;
+		const fallbackBehavior = this.getNodeParameter('fallbackBehavior') as string;
 
-		// Determine which output to use
-		let targetOutputIndex = FALLBACK_OUTPUT;
+		// Determine which output to use based on fallback behavior
+		let targetOutputIndex: number;
 
-		if (specificOutputIndex !== undefined) {
-			// Check if the specific output is connected
-			try {
-				const childNodes = this.getChildNodes(specificOutputIndex.toString());
-				if (childNodes.length > 0) {
-					// Specific output is connected, use it
-					targetOutputIndex = specificOutputIndex;
-				}
-				// Otherwise fall through to use FALLBACK_OUTPUT
-			} catch (error) {
-				// If getChildNodes fails, use fallback
-				targetOutputIndex = FALLBACK_OUTPUT;
-			}
+		if (fallbackBehavior === 'allEvents') {
+			// Route all events to fallback
+			targetOutputIndex = FALLBACK_OUTPUT;
+		} else {
+			// Route known events to specific output, unknown to fallback
+			targetOutputIndex = specificOutputIndex !== undefined ? specificOutputIndex : FALLBACK_OUTPUT;
 		}
 
 		// Route to the determined output (either specific or fallback)
@@ -216,13 +217,6 @@ export class AiFlowTrigger implements INodeType {
 
 		return {
 			workflowData,
-			webhookResponse:
-				responseMode === 'noResponse'
-					? {
-							status: 204,
-							body: '',
-						}
-					: undefined,
 		};
 	}
 }

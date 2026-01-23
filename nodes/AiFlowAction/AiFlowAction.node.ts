@@ -12,14 +12,14 @@ export class AiFlowAction implements INodeType {
 		displayName: 'sipgate AI Flow',
 		name: 'aiFlowAction',
 		icon: 'file:aiflow.svg',
-		group: ['transform'],
+		group: ['output'],
 		version: 1,
 		description: 'Control sipgate AI Flow calls with various actions',
 		defaults: {
 			name: 'sipgate AI Flow',
 		},
 		inputs: [NodeConnectionTypes.Main],
-		outputs: [NodeConnectionTypes.Main],
+		outputs: [],
 		usableAsTool: true,
 		properties: [
 			{
