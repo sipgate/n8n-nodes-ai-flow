@@ -43,7 +43,7 @@ describe('AiFlowTrigger', () => {
 		const createMockWebhookFunctions = (
 			bodyData: IDataObject,
 			headers: { [key: string]: string } = {},
-			params: { [key: string]: any } = {},
+			params: { [key: string]: string | boolean } = {},
 		): IWebhookFunctions => {
 			return {
 				getBodyData: jest.fn().mockReturnValue(bodyData),

@@ -140,7 +140,8 @@ export class AiFlowTrigger implements INodeType {
 		let event: IDataObject;
 		if (bodyData && typeof bodyData === 'object') {
 			// If body has a 'body' property, use that
-			event = (bodyData as any).body || bodyData;
+			const bodyObj = bodyData as IDataObject;
+			event = (bodyObj.body as IDataObject) || bodyData;
 		} else {
 			event = bodyData as IDataObject;
 		}

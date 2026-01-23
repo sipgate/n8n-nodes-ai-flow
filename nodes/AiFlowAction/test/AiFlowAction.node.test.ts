@@ -1,5 +1,5 @@
 import { AiFlowAction } from '../AiFlowAction.node';
-import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 
 describe('AiFlowAction', () => {
 	let action: AiFlowAction;
@@ -24,12 +24,18 @@ describe('AiFlowAction', () => {
 			const operationProperty = action.description.properties.find((p) => p.name === 'operation');
 			expect(operationProperty).toBeDefined();
 			expect(operationProperty?.type).toBe('options');
-			expect((operationProperty as any).options).toHaveLength(5);
+			expect(
+				'options' in operationProperty! ? (operationProperty.options as unknown[]) : [],
+			).toHaveLength(5);
 		});
 
 		it('should have operations in alphabetical order', () => {
 			const operationProperty = action.description.properties.find((p) => p.name === 'operation');
-			const operations = (operationProperty as any).options.map((o: any) => o.name);
+			const options =
+				'options' in operationProperty!
+					? (operationProperty.options as Array<{ name: string }>)
+					: [];
+			const operations = options.map((o) => o.name);
 			expect(operations).toEqual(['Barge-In', 'Hangup', 'Play Audio', 'Speak', 'Transfer Call']);
 		});
 	});
@@ -37,19 +43,20 @@ describe('AiFlowAction', () => {
 	describe('Execute Method', () => {
 		const createMockExecuteFunctions = (
 			items: INodeExecutionData[],
-			parameters: { [key: string]: any },
+			parameters: IDataObject,
 		): IExecuteFunctions => {
 			return {
 				getInputData: jest.fn().mockReturnValue(items),
-				getNodeParameter: jest.fn((paramName: string, itemIndex: number) => {
+				getNodeParameter: jest.fn((paramName: string) => {
 					return parameters[paramName];
 				}),
 				getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
 				continueOnFail: jest.fn().mockReturnValue(false),
 				helpers: {
-					assertBinaryData: jest.fn((itemIndex: number, propertyName: string) => {
-						if (parameters.binaryData && parameters.binaryData[propertyName]) {
-							return parameters.binaryData[propertyName];
+					assertBinaryData: jest.fn((_itemIndex: number, propertyName: string) => {
+						const binaryData = parameters.binaryData as IDataObject | undefined;
+						if (binaryData && binaryData[propertyName]) {
+							return binaryData[propertyName];
 						}
 						throw new Error(`Binary property '${propertyName}' does not exist`);
 					}),
