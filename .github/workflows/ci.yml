@@ -56,4 +56,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to npm
-        run: npm publish --access public --no-git-checks
+        run: npm run publish --access public --no-git-checks
