@@ -23,9 +23,7 @@
 		"lint:fix": "n8n-node lint --fix",
 		"test": "jest",
 		"test:watch": "jest --watch",
-		"test:coverage": "jest --coverage",
-		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
+		"test:coverage": "jest --coverage"
 	},
     "files": [
         "dist"
