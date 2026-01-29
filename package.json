@@ -1,21 +1,21 @@
 {
-    "name": "@sipgate/n8n-nodes-ai-flow",
-    "version": "0.2.0",
-    "description": "n8n community node for sipgate AI Flow - Build voice applications with real-time speech processing",
-    "license": "MIT",
-    "homepage": "https://github.com/sipgate/n8n-nodes-ai-flow",
-    "keywords": [
-        "n8n-community-node-package"
-    ],
-    "author": {
-        "name": "sipgate GmbH",
-        "email": "aiflow@sipgate.de"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/sipgate/n8n-nodes-ai-flow.git"
-    },
-   "scripts": {
+	"name": "@sipgate/n8n-nodes-ai-flow",
+	"version": "0.2.1",
+	"description": "n8n community node for sipgate AI Flow - Build voice applications with real-time speech processing",
+	"license": "MIT",
+	"homepage": "https://github.com/sipgate/n8n-nodes-ai-flow",
+	"keywords": [
+		"n8n-community-node-package"
+	],
+	"author": {
+		"name": "sipgate GmbH",
+		"email": "aiflow@sipgate.de"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sipgate/n8n-nodes-ai-flow.git"
+	},
+	"scripts": {
 		"build": "n8n-node build",
 		"build:watch": "tsc --watch",
 		"dev": "n8n-node dev",
@@ -23,31 +23,33 @@
 		"lint:fix": "n8n-node lint --fix",
 		"test": "jest",
 		"test:watch": "jest --watch",
-		"test:coverage": "jest --coverage"
+		"test:coverage": "jest --coverage",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
 	},
-    "files": [
-        "dist"
-    ],
-    "n8n": {
-        "n8nNodesApiVersion": 1,
-        "strict": true,
-        "credentials": [],
-        "nodes": [
-            "dist/nodes/AiFlowTrigger/AiFlowTrigger.node.js",
-            "dist/nodes/AiFlowAction/AiFlowAction.node.js"
-        ]
-    },
-    "devDependencies": {
-        "@n8n/node-cli": "*",
-        "@types/jest": "^29.5.12",
-        "eslint": "9.32.0",
-        "jest": "^29.7.0",
-        "prettier": "3.6.2",
-        "release-it": "^19.0.4",
-        "ts-jest": "^29.1.2",
-        "typescript": "5.9.2"
-    },
-    "peerDependencies": {
-        "n8n-workflow": "*"
-    }
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [],
+		"nodes": [
+			"dist/nodes/AiFlowTrigger/AiFlowTrigger.node.js",
+			"dist/nodes/AiFlowAction/AiFlowAction.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"@types/jest": "^29.5.12",
+		"eslint": "9.32.0",
+		"jest": "^29.7.0",
+		"prettier": "3.6.2",
+		"release-it": "^19.0.4",
+		"ts-jest": "^29.1.2",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
 }
