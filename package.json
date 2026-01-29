@@ -1,6 +1,6 @@
 {
 	"name": "@sipgate/n8n-nodes-ai-flow",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"description": "n8n community node for sipgate AI Flow - Build voice applications with real-time speech processing",
 	"license": "MIT",
 	"homepage": "https://github.com/sipgate/n8n-nodes-ai-flow",
