@@ -61,3 +61,5 @@ jobs:
 
       - name: Publish to npm
         run: npm run release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
