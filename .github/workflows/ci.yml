@@ -20,7 +20,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install dependencies
         run: 'npm ci'
@@ -45,7 +45,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install dependencies
         run: 'npm ci'
@@ -53,17 +53,15 @@ jobs:
       - name: Build package
         run: 'npm run build'
 
-      - name: Setup npm authentication
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Initialize Git config
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com" 
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # No NPM_TOKEN needed: npm 11.5.1+ detects the OIDC trusted publisher
+      # configured for this package on npmjs.com (Settings → Trusted Publisher)
+      # and authenticates via the GitHub Actions OIDC token. Requires the
+      # `id-token: write` permission set at the workflow level.
       - name: Publish to npm
         run: npm run release --ci
         env:
