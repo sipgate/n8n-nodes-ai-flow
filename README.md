@@ -13,7 +13,6 @@ sipgate AI Flow is a voice assistant platform for building AI-powered voice appl
 [Usage](#usage)
 [Testing](#testing)
 [Resources](#resources)
-[Version history](#version-history)
 
 ## Installation
 
@@ -347,30 +346,9 @@ npm run test:watch
 npm run test:coverage
 ```
 
-## Version History
+## Changelog
 
-### 0.2.0 (Current)
-- **Unified Action Node**: Single "sipgate AI Flow" node with 5 operations
-  - Speak (text/SSML with TTS provider selection)
-  - Play Audio (base64 or binary data)
-  - Transfer Call (to phone number)
-  - Hangup (end call)
-  - Barge-In (interrupt playback)
-- **Fallback Output**: 7th output for unknown events or catch-all behavior
-- **Fallback Behavior Setting**: Choose between "Unknown Events Only" or "All Events"
-- **Final Node**: Action node has no outputs (endpoint)
-- **Comprehensive Tests**: 42 test cases with 94%+ coverage
-- **Improved Documentation**: Updated README with all features
-
-### 0.1.0
-- Initial release
-- **sipgate AI Flow Trigger node with multiple outputs**
-  - 6 dedicated outputs for automatic event routing
-  - No IF/Switch nodes needed for event type handling
-  - Support for all AI Flow events (session_start, user_speak, etc.)
-- Authentication support (None, Header Auth)
-- Barge-in flag support
-- Complete session information in all events
+See [CHANGELOG.md](./CHANGELOG.md) and the [GitHub Releases](https://github.com/sipgate/n8n-nodes-ai-flow/releases) page.
 
 ## License
 

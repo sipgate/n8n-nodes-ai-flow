@@ -58,11 +58,28 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # Skip publish if the version in package.json is already on the registry.
+      # Releases must come from `npm run release` locally, which bumps the
+      # version. A plain README/CI/etc. push to main shouldn't try to republish.
+      - name: Check if version already published
+        id: version_check
+        run: |
+          PKG_NAME=$(jq -r .name package.json)
+          PKG_VERSION=$(jq -r .version package.json)
+          if npm view "$PKG_NAME@$PKG_VERSION" version --silent >/dev/null 2>&1; then
+            echo "$PKG_NAME@$PKG_VERSION already published — skipping publish step."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$PKG_NAME@$PKG_VERSION not yet on registry — will publish."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # No NPM_TOKEN needed: npm 11.5.1+ detects the OIDC trusted publisher
       # configured for this package on npmjs.com (Settings → Trusted Publisher)
       # and authenticates via the GitHub Actions OIDC token. Requires the
       # `id-token: write` permission set at the workflow level.
       - name: Publish to npm
+        if: steps.version_check.outputs.skip != 'true'
         run: npm run release --ci
         env:
           GITHUB_TOKEN: ${{ github.token }}

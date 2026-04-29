@@ -1,0 +1,6 @@
+{
+	"commitUrl": "https://github.com/sipgate/n8n-nodes-ai-flow/commit/{id}",
+	"compareUrl": "https://github.com/sipgate/n8n-nodes-ai-flow/compare/{from}...{to}",
+	"issueUrl": "https://github.com/sipgate/n8n-nodes-ai-flow/issues/{id}",
+	"mergeUrl": "https://github.com/sipgate/n8n-nodes-ai-flow/pull/{id}"
+}
