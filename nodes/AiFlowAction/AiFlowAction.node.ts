@@ -14,6 +14,7 @@ export class AiFlowAction implements INodeType {
 		icon: 'file:aiflow.svg',
 		group: ['output'],
 		version: 1,
+		subtitle: '={{$parameter["operation"]}}',
 		description: 'Control sipgate AI Flow calls with various actions',
 		defaults: {
 			name: 'sipgate AI Flow',
@@ -35,16 +36,34 @@ export class AiFlowAction implements INodeType {
 						action: 'Interrupt playback',
 					},
 					{
+						name: 'Configure Transcription',
+						value: 'configureTranscription',
+						description: 'Change STT provider, languages, or custom vocabulary mid-call',
+						action: 'Configure transcription',
+					},
+					{
 						name: 'Hangup',
 						value: 'hangup',
 						description: 'End the call',
 						action: 'End the call',
 					},
 					{
+						name: 'Mix Audio',
+						value: 'mixAudio',
+						description: 'Loop a background audio track underneath speech (or stop it)',
+						action: 'Mix background audio',
+					},
+					{
 						name: 'Play Audio',
 						value: 'audio',
 						description: 'Play pre-recorded audio',
 						action: 'Play audio file',
+					},
+					{
+						name: 'Send SMS',
+						value: 'sendSms',
+						description: 'Send an SMS during the call (fire-and-forget)',
+						action: 'Send an SMS',
 					},
 					{
 						name: 'Speak',
@@ -78,14 +97,14 @@ export class AiFlowAction implements INodeType {
 				type: 'options',
 				options: [
 					{
-						name: 'Text',
-						value: 'text',
-						description: 'Plain text to speak',
-					},
-					{
 						name: 'SSML',
 						value: 'ssml',
 						description: 'SSML markup for advanced control',
+					},
+					{
+						name: 'Text',
+						value: 'text',
+						description: 'Plain text to speak',
 					},
 				],
 				default: 'text',
@@ -153,14 +172,14 @@ export class AiFlowAction implements INodeType {
 				type: 'options',
 				options: [
 					{
-						name: 'Default',
-						value: 'default',
-						description: 'Use the default TTS provider configured in AI Flow',
-					},
-					{
 						name: 'Azure',
 						value: 'azure',
 						description: 'Azure Cognitive Services TTS',
+					},
+					{
+						name: 'Default',
+						value: 'default',
+						description: 'Use the default TTS provider configured in AI Flow',
 					},
 					{
 						name: 'ElevenLabs',
@@ -318,6 +337,220 @@ export class AiFlowAction implements INodeType {
 				description: 'Phone number to display as caller ID (E.164 format recommended)',
 				placeholder: '+491234567890',
 			},
+			{
+				displayName: 'Ring Timeout (Seconds)',
+				name: 'transferTimeout',
+				type: 'number',
+				default: 0,
+				typeOptions: {
+					minValue: 0,
+					maxValue: 120,
+				},
+				displayOptions: {
+					show: {
+						operation: ['transfer'],
+					},
+				},
+				description:
+					'How long to ring the target before giving up (5-120 seconds). 0 uses the AI Flow default.',
+			},
+
+			// ===== MIX AUDIO OPERATION =====
+			{
+				displayName: 'Mode',
+				name: 'mixAudioMode',
+				type: 'options',
+				options: [
+					{
+						name: 'Start / Replace Loop',
+						value: 'start',
+						description: 'Start (or replace) the background audio loop',
+					},
+					{
+						name: 'Stop Loop',
+						value: 'stop',
+						description: 'Stop any currently playing background audio loop',
+					},
+				],
+				default: 'start',
+				displayOptions: {
+					show: {
+						operation: ['mixAudio'],
+					},
+				},
+				description: 'Whether to start a new background loop or stop the current one',
+			},
+			{
+				displayName: 'Audio Source',
+				name: 'mixAudioSource',
+				type: 'options',
+				options: [
+					{
+						name: 'Base64 String',
+						value: 'base64',
+					},
+					{
+						name: 'Binary Data',
+						value: 'binary',
+					},
+				],
+				default: 'base64',
+				displayOptions: {
+					show: {
+						operation: ['mixAudio'],
+						mixAudioMode: ['start'],
+					},
+				},
+				description: 'Source of the audio data to loop',
+			},
+			{
+				displayName: 'Audio (Base64)',
+				name: 'mixAudioBase64',
+				type: 'string',
+				typeOptions: {
+					rows: 4,
+				},
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['mixAudio'],
+						mixAudioMode: ['start'],
+						mixAudioSource: ['base64'],
+					},
+				},
+				description: 'Base64 encoded WAV audio (16kHz, mono, 16-bit PCM)',
+			},
+			{
+				displayName: 'Binary Property',
+				name: 'mixAudioBinaryProperty',
+				type: 'string',
+				default: 'data',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['mixAudio'],
+						mixAudioMode: ['start'],
+						mixAudioSource: ['binary'],
+					},
+				},
+				description: 'Name of the binary property containing the audio file',
+			},
+			{
+				displayName: 'Volume',
+				name: 'mixAudioVolume',
+				type: 'number',
+				default: 0.5,
+				typeOptions: {
+					numberPrecision: 2,
+					minValue: 0,
+					maxValue: 1,
+				},
+				displayOptions: {
+					show: {
+						operation: ['mixAudio'],
+						mixAudioMode: ['start'],
+					},
+				},
+				description: 'Loop volume between 0.0 and 1.0',
+			},
+
+			// ===== CONFIGURE TRANSCRIPTION OPERATION =====
+			{
+				displayName: 'Provider',
+				name: 'transcriptionProvider',
+				type: 'options',
+				options: [
+					{
+						name: 'Azure',
+						value: 'AZURE',
+					},
+					{
+						name: 'Deepgram',
+						value: 'DEEPGRAM',
+					},
+					{
+						name: 'ElevenLabs',
+						value: 'ELEVEN_LABS',
+					},
+					{
+						name: 'Keep Current',
+						value: 'keep',
+						description: 'Do not change the transcription provider',
+					},
+				],
+				default: 'keep',
+				displayOptions: {
+					show: {
+						operation: ['configureTranscription'],
+					},
+				},
+				description: 'Speech-to-text provider to switch to',
+			},
+			{
+				displayName: 'Languages',
+				name: 'transcriptionLanguages',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['configureTranscription'],
+					},
+				},
+				description:
+					'Comma-separated BCP-47 language codes (1-4 entries, e.g. "de-DE,en-US"). Leave empty to keep current.',
+				placeholder: 'de-DE,en-US',
+			},
+			{
+				displayName: 'Custom Vocabulary',
+				name: 'transcriptionVocabulary',
+				type: 'string',
+				typeOptions: {
+					rows: 3,
+				},
+				default: '',
+				displayOptions: {
+					show: {
+						operation: ['configureTranscription'],
+					},
+				},
+				description:
+					'Comma- or newline-separated phrases to bias the recognizer (max 100 entries, max 200 chars each). Leave empty to keep current.',
+				placeholder: 'sipgate, AI Flow, Düsseldorf',
+			},
+
+			// ===== SEND SMS OPERATION =====
+			{
+				displayName: 'Recipient Phone Number',
+				name: 'smsPhoneNumber',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['sendSms'],
+					},
+				},
+				description: 'Recipient phone number (E.164 format without leading +)',
+				placeholder: '491234567890',
+			},
+			{
+				displayName: 'Message',
+				name: 'smsMessage',
+				type: 'string',
+				typeOptions: {
+					rows: 3,
+				},
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['sendSms'],
+					},
+				},
+				description: 'SMS message body (at least 1 character)',
+				placeholder: 'Thank you for your call. Here is the link we discussed: https://...',
+			},
 
 			// ===== BARGE-IN OPTIONS (for speak and audio) =====
 			{
@@ -337,6 +570,11 @@ export class AiFlowAction implements INodeType {
 						name: 'strategy',
 						type: 'options',
 						options: [
+							{
+								name: 'Immediate',
+								value: 'immediate',
+								description: 'Allow barge-in as soon as any speech is detected',
+							},
 							{
 								name: 'Minimum Characters',
 								value: 'minimum_characters',
@@ -535,6 +773,7 @@ export class AiFlowAction implements INodeType {
 						const targetPhoneNumber = this.getNodeParameter('targetPhoneNumber', i) as string;
 						const callerIdName = this.getNodeParameter('callerIdName', i) as string;
 						const callerIdNumber = this.getNodeParameter('callerIdNumber', i) as string;
+						const transferTimeout = this.getNodeParameter('transferTimeout', i, 0) as number;
 
 						if (!targetPhoneNumber) {
 							throw new NodeOperationError(this.getNode(), 'Target phone number is required', {
@@ -557,6 +796,17 @@ export class AiFlowAction implements INodeType {
 						action.target_phone_number = targetPhoneNumber;
 						action.caller_id_name = callerIdName;
 						action.caller_id_number = callerIdNumber;
+
+						if (transferTimeout > 0) {
+							if (transferTimeout < 5 || transferTimeout > 120) {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Transfer timeout must be between 5 and 120 seconds',
+									{ itemIndex: i },
+								);
+							}
+							action.timeout = transferTimeout;
+						}
 						break;
 					}
 
@@ -567,6 +817,151 @@ export class AiFlowAction implements INodeType {
 
 					case 'bargeIn': {
 						action.type = 'barge_in';
+						break;
+					}
+
+					case 'mixAudio': {
+						action.type = 'mix_audio';
+
+						const mode = this.getNodeParameter('mixAudioMode', i) as string;
+
+						if (mode === 'stop') {
+							action.stop = true;
+							break;
+						}
+
+						const audioSource = this.getNodeParameter('mixAudioSource', i) as string;
+						let audioBase64: string;
+
+						if (audioSource === 'base64') {
+							audioBase64 = this.getNodeParameter('mixAudioBase64', i) as string;
+							if (!audioBase64) {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Audio base64 string is required',
+									{ itemIndex: i },
+								);
+							}
+						} else {
+							const binaryPropertyName = this.getNodeParameter(
+								'mixAudioBinaryProperty',
+								i,
+							) as string;
+							const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
+							if (!binaryData.data) {
+								throw new NodeOperationError(
+									this.getNode(),
+									`Binary property '${binaryPropertyName}' does not contain data`,
+									{ itemIndex: i },
+								);
+							}
+							audioBase64 = binaryData.data;
+						}
+
+						action.audio = audioBase64;
+
+						const volume = this.getNodeParameter('mixAudioVolume', i, 0.5) as number;
+						if (volume < 0 || volume > 1) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Volume must be between 0.0 and 1.0',
+								{ itemIndex: i },
+							);
+						}
+						action.volume = volume;
+						break;
+					}
+
+					case 'configureTranscription': {
+						action.type = 'configure_transcription';
+
+						const provider = this.getNodeParameter('transcriptionProvider', i) as string;
+						const languagesRaw = this.getNodeParameter(
+							'transcriptionLanguages',
+							i,
+							'',
+						) as string;
+						const vocabularyRaw = this.getNodeParameter(
+							'transcriptionVocabulary',
+							i,
+							'',
+						) as string;
+
+						if (provider !== 'keep') {
+							action.provider = provider;
+						}
+
+						const languages = languagesRaw
+							.split(',')
+							.map((s) => s.trim())
+							.filter((s) => s.length > 0);
+						if (languages.length > 0) {
+							if (languages.length > 4) {
+								throw new NodeOperationError(
+									this.getNode(),
+									'At most 4 languages are allowed',
+									{ itemIndex: i },
+								);
+							}
+							action.languages = languages;
+						}
+
+						const vocabulary = vocabularyRaw
+							.split(/[\n,]/)
+							.map((s) => s.trim())
+							.filter((s) => s.length > 0);
+						if (vocabulary.length > 0) {
+							if (vocabulary.length > 100) {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Custom vocabulary supports at most 100 entries',
+									{ itemIndex: i },
+								);
+							}
+							const tooLong = vocabulary.find((s) => s.length > 200);
+							if (tooLong) {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Each custom vocabulary entry must be 200 characters or fewer',
+									{ itemIndex: i },
+								);
+							}
+							action.custom_vocabulary = vocabulary;
+						}
+
+						if (
+							action.provider === undefined &&
+							action.languages === undefined &&
+							action.custom_vocabulary === undefined
+						) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'configure_transcription needs at least a provider, languages, or custom vocabulary',
+								{ itemIndex: i },
+							);
+						}
+						break;
+					}
+
+					case 'sendSms': {
+						action.type = 'send_sms';
+
+						const phoneNumber = this.getNodeParameter('smsPhoneNumber', i) as string;
+						const message = this.getNodeParameter('smsMessage', i) as string;
+
+						if (!phoneNumber) {
+							throw new NodeOperationError(this.getNode(), 'Phone number is required', {
+								itemIndex: i,
+							});
+						}
+						if (!message) {
+							throw new NodeOperationError(this.getNode(), 'Message is required', {
+								itemIndex: i,
+							});
+						}
+
+						action.phone_number = phoneNumber;
+						action.message = message;
 						break;
 					}
 

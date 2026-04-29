@@ -16,8 +16,8 @@ describe('AiFlowTrigger', () => {
 			expect(trigger.description.version).toBe(1);
 		});
 
-		it('should have 7 outputs', () => {
-			expect(trigger.description.outputs).toHaveLength(7);
+		it('should have 9 outputs', () => {
+			expect(trigger.description.outputs).toHaveLength(9);
 		});
 
 		it('should have correct output names', () => {
@@ -29,6 +29,8 @@ describe('AiFlowTrigger', () => {
 				'User Input Timeout',
 				'Session End',
 				'Fallback',
+				'DTMF Received',
+				'SMS Failed',
 			]);
 		});
 
@@ -124,11 +126,11 @@ describe('AiFlowTrigger', () => {
 
 				const result = await trigger.webhook.call(mockFunctions);
 
-				expect(result.workflowData).toHaveLength(7);
+				expect(result.workflowData).toHaveLength(9);
 				expect(result.workflowData![0]).toHaveLength(1);
 				expect(result.workflowData![0][0].json.type).toBe('session_start');
 				// All other outputs should be empty
-				for (let i = 1; i < 7; i++) {
+				for (let i = 1; i < 9; i++) {
 					expect(result.workflowData![i]).toHaveLength(0);
 				}
 			});
@@ -216,6 +218,47 @@ describe('AiFlowTrigger', () => {
 
 				expect(result.workflowData![5]).toHaveLength(1);
 				expect(result.workflowData![5][0].json.type).toBe('session_end');
+			});
+
+			it('should route dtmf_received to output 7', async () => {
+				const mockFunctions = createMockWebhookFunctions(
+					{ type: 'dtmf_received', digit: '5', session: { id: '123' } },
+					{},
+					{
+						authentication: 'none',
+						includeBargeIn: true,
+						fallbackBehavior: 'unknownOnly',
+					},
+				);
+
+				const result = await trigger.webhook.call(mockFunctions);
+
+				expect(result.workflowData![7]).toHaveLength(1);
+				expect(result.workflowData![7][0].json.type).toBe('dtmf_received');
+				expect(result.workflowData![7][0].json.digit).toBe('5');
+			});
+
+			it('should route sms_failed to output 8', async () => {
+				const mockFunctions = createMockWebhookFunctions(
+					{
+						type: 'sms_failed',
+						session: { id: '123' },
+						recipient: '491234567890',
+						reason: 'insufficient_balance',
+					},
+					{},
+					{
+						authentication: 'none',
+						includeBargeIn: true,
+						fallbackBehavior: 'unknownOnly',
+					},
+				);
+
+				const result = await trigger.webhook.call(mockFunctions);
+
+				expect(result.workflowData![8]).toHaveLength(1);
+				expect(result.workflowData![8][0].json.type).toBe('sms_failed');
+				expect(result.workflowData![8][0].json.reason).toBe('insufficient_balance');
 			});
 
 			it('should route unknown event type to fallback output (6)', async () => {

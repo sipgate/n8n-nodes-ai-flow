@@ -15,12 +15,15 @@ export class AiFlowTrigger implements INodeType {
 		icon: 'file:aiflow.svg',
 		group: ['trigger'],
 		version: 1,
+		subtitle: '={{$parameter["authentication"]}}',
 		description: 'Handles webhook events from sipgate AI Flow voice assistant',
 		defaults: {
 			name: 'AI Flow Trigger',
 		},
 		inputs: [],
 		outputs: [
+			NodeConnectionTypes.Main,
+			NodeConnectionTypes.Main,
 			NodeConnectionTypes.Main,
 			NodeConnectionTypes.Main,
 			NodeConnectionTypes.Main,
@@ -37,6 +40,8 @@ export class AiFlowTrigger implements INodeType {
 			'User Input Timeout',
 			'Session End',
 			'Fallback',
+			'DTMF Received',
+			'SMS Failed',
 		],
 		usableAsTool: true,
 		webhooks: [
@@ -54,12 +59,12 @@ export class AiFlowTrigger implements INodeType {
 				type: 'options',
 				options: [
 					{
-						name: 'None',
-						value: 'none',
-					},
-					{
 						name: 'Header Auth',
 						value: 'headerAuth',
+					},
+					{
+						name: 'None',
+						value: 'none',
 					},
 				],
 				default: 'headerAuth',
@@ -114,14 +119,14 @@ export class AiFlowTrigger implements INodeType {
 				type: 'options',
 				options: [
 					{
-						name: 'Unknown Events Only',
-						value: 'unknownOnly',
-						description: 'Route only unknown event types to fallback output',
-					},
-					{
 						name: 'All Events',
 						value: 'allEvents',
 						description: 'Route all events to fallback output (ignore specific outputs)',
+					},
+					{
+						name: 'Unknown Events Only',
+						value: 'unknownOnly',
+						description: 'Route only unknown event types to fallback output',
 					},
 				],
 				default: 'unknownOnly',
@@ -184,9 +189,12 @@ export class AiFlowTrigger implements INodeType {
 			assistant_speech_ended: 3,
 			user_input_timeout: 4,
 			session_end: 5,
+			dtmf_received: 7,
+			sms_failed: 8,
 		};
 
 		const FALLBACK_OUTPUT = 6;
+		const TOTAL_OUTPUTS = 9;
 		const specificOutputIndex = eventOutputMap[eventType];
 
 		// Prepare output data - use the event directly
@@ -212,7 +220,7 @@ export class AiFlowTrigger implements INodeType {
 		}
 
 		// Route to the determined output (either specific or fallback)
-		const workflowData: INodeExecutionData[][] = Array(7)
+		const workflowData: INodeExecutionData[][] = Array(TOTAL_OUTPUTS)
 			.fill(null)
 			.map((_, index) => (index === targetOutputIndex ? [{ json: outputData }] : []));
 

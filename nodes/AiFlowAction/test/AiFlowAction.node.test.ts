@@ -20,13 +20,13 @@ describe('AiFlowAction', () => {
 			expect(action.description.outputs).toEqual([]);
 		});
 
-		it('should have 5 operations', () => {
+		it('should have 8 operations', () => {
 			const operationProperty = action.description.properties.find((p) => p.name === 'operation');
 			expect(operationProperty).toBeDefined();
 			expect(operationProperty?.type).toBe('options');
 			expect(
 				'options' in operationProperty! ? (operationProperty.options as unknown[]) : [],
-			).toHaveLength(5);
+			).toHaveLength(8);
 		});
 
 		it('should have operations in alphabetical order', () => {
@@ -36,7 +36,16 @@ describe('AiFlowAction', () => {
 					? (operationProperty.options as Array<{ name: string }>)
 					: [];
 			const operations = options.map((o) => o.name);
-			expect(operations).toEqual(['Barge-In', 'Hangup', 'Play Audio', 'Speak', 'Transfer Call']);
+			expect(operations).toEqual([
+				'Barge-In',
+				'Configure Transcription',
+				'Hangup',
+				'Mix Audio',
+				'Play Audio',
+				'Send SMS',
+				'Speak',
+				'Transfer Call',
+			]);
 		});
 	});
 
@@ -324,6 +333,7 @@ describe('AiFlowAction', () => {
 						targetPhoneNumber: '+491234567890',
 						callerIdName: 'Support Team',
 						callerIdNumber: '+490987654321',
+						transferTimeout: 0,
 					},
 				);
 
@@ -338,6 +348,42 @@ describe('AiFlowAction', () => {
 				});
 			});
 
+			it('should include timeout when provided', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'transfer',
+						sessionId: 'test-session-123',
+						targetPhoneNumber: '+491234567890',
+						callerIdName: 'Support Team',
+						callerIdNumber: '+490987654321',
+						transferTimeout: 30,
+					},
+				);
+
+				const result = await action.execute.call(mockFunctions);
+
+				expect(result[0][0].json.timeout).toBe(30);
+			});
+
+			it('should reject timeout outside the 5-120 range', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'transfer',
+						sessionId: 'test-session-123',
+						targetPhoneNumber: '+491234567890',
+						callerIdName: 'Support Team',
+						callerIdNumber: '+490987654321',
+						transferTimeout: 3,
+					},
+				);
+
+				await expect(action.execute.call(mockFunctions)).rejects.toThrow(
+					'Transfer timeout must be between 5 and 120 seconds',
+				);
+			});
+
 			it('should throw error if target phone number is missing', async () => {
 				const mockFunctions = createMockExecuteFunctions(
 					[{ json: {} }],
@@ -347,11 +393,192 @@ describe('AiFlowAction', () => {
 						targetPhoneNumber: '',
 						callerIdName: 'Support Team',
 						callerIdNumber: '+490987654321',
+						transferTimeout: 0,
 					},
 				);
 
 				await expect(action.execute.call(mockFunctions)).rejects.toThrow(
 					'Target phone number is required',
+				);
+			});
+		});
+
+		describe('Mix Audio Operation', () => {
+			it('should create mix_audio action with base64 and default volume', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'mixAudio',
+						sessionId: 'test-session-123',
+						mixAudioMode: 'start',
+						mixAudioSource: 'base64',
+						mixAudioBase64: 'UklGRiQAAABXQVZF...',
+						mixAudioVolume: 0.5,
+					},
+				);
+
+				const result = await action.execute.call(mockFunctions);
+
+				expect(result[0][0].json).toEqual({
+					type: 'mix_audio',
+					session_id: 'test-session-123',
+					audio: 'UklGRiQAAABXQVZF...',
+					volume: 0.5,
+				});
+			});
+
+			it('should create mix_audio stop action without audio', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'mixAudio',
+						sessionId: 'test-session-123',
+						mixAudioMode: 'stop',
+					},
+				);
+
+				const result = await action.execute.call(mockFunctions);
+
+				expect(result[0][0].json).toEqual({
+					type: 'mix_audio',
+					session_id: 'test-session-123',
+					stop: true,
+				});
+			});
+
+			it('should reject volume outside 0..1', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'mixAudio',
+						sessionId: 'test-session-123',
+						mixAudioMode: 'start',
+						mixAudioSource: 'base64',
+						mixAudioBase64: 'UklGRiQAAABXQVZF...',
+						mixAudioVolume: 1.5,
+					},
+				);
+
+				await expect(action.execute.call(mockFunctions)).rejects.toThrow(
+					'Volume must be between 0.0 and 1.0',
+				);
+			});
+		});
+
+		describe('Configure Transcription Operation', () => {
+			it('should set provider only', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'configureTranscription',
+						sessionId: 'test-session-123',
+						transcriptionProvider: 'DEEPGRAM',
+						transcriptionLanguages: '',
+						transcriptionVocabulary: '',
+					},
+				);
+
+				const result = await action.execute.call(mockFunctions);
+
+				expect(result[0][0].json).toEqual({
+					type: 'configure_transcription',
+					session_id: 'test-session-123',
+					provider: 'DEEPGRAM',
+				});
+			});
+
+			it('should parse comma-separated languages and vocabulary', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'configureTranscription',
+						sessionId: 'test-session-123',
+						transcriptionProvider: 'keep',
+						transcriptionLanguages: 'de-DE, en-US',
+						transcriptionVocabulary: 'sipgate, AI Flow\nDüsseldorf',
+					},
+				);
+
+				const result = await action.execute.call(mockFunctions);
+
+				expect(result[0][0].json).toEqual({
+					type: 'configure_transcription',
+					session_id: 'test-session-123',
+					languages: ['de-DE', 'en-US'],
+					custom_vocabulary: ['sipgate', 'AI Flow', 'Düsseldorf'],
+				});
+			});
+
+			it('should throw if no field is provided', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'configureTranscription',
+						sessionId: 'test-session-123',
+						transcriptionProvider: 'keep',
+						transcriptionLanguages: '',
+						transcriptionVocabulary: '',
+					},
+				);
+
+				await expect(action.execute.call(mockFunctions)).rejects.toThrow(
+					'configure_transcription needs at least a provider, languages, or custom vocabulary',
+				);
+			});
+
+			it('should reject more than 4 languages', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'configureTranscription',
+						sessionId: 'test-session-123',
+						transcriptionProvider: 'keep',
+						transcriptionLanguages: 'de-DE,en-US,fr-FR,es-ES,it-IT',
+						transcriptionVocabulary: '',
+					},
+				);
+
+				await expect(action.execute.call(mockFunctions)).rejects.toThrow(
+					'At most 4 languages are allowed',
+				);
+			});
+		});
+
+		describe('Send SMS Operation', () => {
+			it('should create send_sms action', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'sendSms',
+						sessionId: 'test-session-123',
+						smsPhoneNumber: '491234567890',
+						smsMessage: 'Hello from AI Flow',
+					},
+				);
+
+				const result = await action.execute.call(mockFunctions);
+
+				expect(result[0][0].json).toEqual({
+					type: 'send_sms',
+					session_id: 'test-session-123',
+					phone_number: '491234567890',
+					message: 'Hello from AI Flow',
+				});
+			});
+
+			it('should throw if message is missing', async () => {
+				const mockFunctions = createMockExecuteFunctions(
+					[{ json: {} }],
+					{
+						operation: 'sendSms',
+						sessionId: 'test-session-123',
+						smsPhoneNumber: '491234567890',
+						smsMessage: '',
+					},
+				);
+
+				await expect(action.execute.call(mockFunctions)).rejects.toThrow(
+					'Message is required',
 				);
 			});
 		});

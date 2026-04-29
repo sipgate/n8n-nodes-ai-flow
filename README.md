@@ -33,9 +33,9 @@ This package provides two nodes for working with sipgate AI Flow:
 
 A webhook trigger node that receives events from sipgate AI Flow and **automatically routes them to dedicated outputs**.
 
-#### 🎯 Seven Dedicated Outputs for Event Routing
+#### 🎯 Nine Dedicated Outputs for Event Routing
 
-The trigger provides **automatic event routing** to 7 separate outputs, eliminating the need for IF or Switch nodes:
+The trigger provides **automatic event routing** to 9 separate outputs, eliminating the need for IF or Switch nodes:
 
 1. **Session Start** - Call begins
 2. **User Speak** - User speaks (includes speech-to-text result)
@@ -44,6 +44,8 @@ The trigger provides **automatic event routing** to 7 separate outputs, eliminat
 5. **User Input Timeout** - Timeout waiting for user input
 6. **Session End** - Call ends
 7. **Fallback** - Unknown event types or catch-all
+8. **DTMF Received** - Keypad digit pressed during the call
+9. **SMS Failed** - An SMS sent via the Send SMS action could not be delivered
 
 #### Fallback Behavior
 
@@ -61,7 +63,7 @@ The Fallback output can be configured with two modes:
 
 ### 2. sipgate AI Flow (Action)
 
-A unified action node with 5 operations for controlling AI Flow calls. This is a **final node** (no output connections) that generates the action JSON.
+A unified action node with 8 operations for controlling AI Flow calls. This is a **final node** (no output connections) that generates the action JSON.
 
 #### Available Operations
 
@@ -72,7 +74,7 @@ Make the assistant speak text or SSML with advanced options:
 - **TTS Provider**: Default, Azure, or ElevenLabs
   - Azure: Language and voice configuration
   - ElevenLabs: Voice ID configuration
-- **Barge-In Options**: Strategy (minimum characters, manual, none) and timing
+- **Barge-In Options**: Strategy (immediate, minimum characters, manual, none) and timing
 
 ##### 🎵 Play Audio
 Play pre-recorded audio files:
@@ -85,6 +87,7 @@ Transfer the call to another phone number:
 - **Target Phone Number**: E.164 format recommended
 - **Caller ID Name**: Name displayed to recipient
 - **Caller ID Number**: Phone number displayed to recipient
+- **Ring Timeout**: Optional 5–120 s ring timeout
 
 ##### ☎️ Hangup
 End the call immediately:
@@ -95,6 +98,23 @@ End the call immediately:
 Manually interrupt current playback:
 - Programmatic interruption control
 - Useful for stopping long audio/speech
+
+##### 🎚️ Mix Audio
+Loop a background audio track underneath speech (e.g. hold music, ambient bed):
+- **Mode**: Start/replace the loop or stop it
+- **Audio Source**: Base64 string or binary data
+- **Volume**: 0.0–1.0 (default 0.5)
+
+##### 🗣️ Configure Transcription
+Change speech-to-text behavior mid-call:
+- **Provider**: Azure, Deepgram, ElevenLabs, or keep current
+- **Languages**: Comma-separated BCP-47 codes (1–4)
+- **Custom Vocabulary**: Up to 100 phrases (≤ 200 chars each) to bias recognition
+
+##### 📨 Send SMS
+Send an SMS during the call (fire-and-forget; failures arrive on the SMS Failed trigger output):
+- **Recipient Phone Number**: E.164 without leading `+`
+- **Message**: SMS body
 
 ## Credentials
 
@@ -227,7 +247,7 @@ All events include the following session information:
 ```json
 {
   "type": "user_speak",
-  "transcript": "Hello",
+  "text": "Hello",
   "barged_in": false,
   "session": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -239,6 +259,8 @@ All events include the following session information:
   }
 }
 ```
+
+> **Note:** Earlier sipgate AI Flow versions delivered the recognized speech as `transcript`. The current API uses `text`. The trigger forwards whatever the API sends, so update workflow expressions accordingly.
 
 ### Action Node Outputs
 
